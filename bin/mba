@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "skills" / "mba-adversarial-evaluator" / "scripts"
+if not SCRIPTS.exists():
+    SCRIPTS = Path.home() / ".codex" / "skills" / "mba-adversarial-evaluator" / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+
+from mba_adversarial import run_adversarial_evaluation
+from mba_blanket import compute_blanket
+from mba_field import compile_field, load_state, reconstruct_field
+from mba_index import build_index, choose_seed
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(prog="mba", description="Markov blanket activation tools for markdown-vault AI agents.")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    doctor = sub.add_parser("doctor", help="Check local runtime.")
+    doctor.set_defaults(func=cmd_doctor)
+
+    blanket = sub.add_parser("blanket", help="Compute an active blanket.")
+    add_common(blanket)
+    blanket.add_argument("--query", default="", help="Activation query.")
+    blanket.set_defaults(func=cmd_blanket)
+
+    field = sub.add_parser("field", help="Compute and compile a bounded cognitive field.")
+    add_common(field)
+    field.add_argument("--query", default="", help="Activation query.")
+    field.set_defaults(func=cmd_field)
+
+    adversarial = sub.add_parser("adversarial", help="Run adversarial probe suite.")
+    add_common(adversarial)
+    adversarial.add_argument("--out", help="Output JSON path. Defaults to VAULT/.markov/adversarial-evaluation.json.")
+    adversarial.set_defaults(func=cmd_adversarial)
+
+    args = parser.parse_args()
+    return args.func(args)
+
+
+def add_common(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--vault", required=True, help="Path to markdown vault.")
+    parser.add_argument("--seed", help="Seed note path or title. Defaults to a Thuion-like note if present.")
+    parser.add_argument("--json", action="store_true", help="Print full JSON instead of compact summary.")
+
+
+def cmd_doctor(_args: argparse.Namespace) -> int:
+    print(json.dumps({
+        "python": sys.version.split()[0],
+        "skill_scripts": str(SCRIPTS),
+        "scripts_exist": SCRIPTS.exists(),
+    }, indent=2))
+    return 0
+
+
+def cmd_blanket(args: argparse.Namespace) -> int:
+    index = build_index(args.vault)
+    seed = choose_seed(index, args.seed)
+    signals = [
+        {"type": "active_note", "value": seed, "weight": 1, "source": "mba-cli"},
+        {"type": "query", "value": args.query, "weight": 1, "source": "mba-cli"},
+    ]
+    result = compute_blanket(index, seed, args.query, signals)
+    if args.json:
+        print(json.dumps(result, indent=2))
+    else:
+        print_summary(result)
+    return 0
+
+
+def cmd_field(args: argparse.Namespace) -> int:
+    index = build_index(args.vault)
+    seed = choose_seed(index, args.seed)
+    signals = [
+        {"type": "active_note", "value": seed, "weight": 1, "source": "mba-cli"},
+        {"type": "query", "value": args.query, "weight": 1, "source": "mba-cli"},
+    ]
+    blanket = compute_blanket(index, seed, args.query, signals)
+    trace, report = load_state(args.vault)
+    field = reconstruct_field(args.query, blanket, trace, report)
+    if args.json:
+        print(json.dumps(field, indent=2))
+    else:
+        print(compile_field(field))
+    return 0
+
+
+def cmd_adversarial(args: argparse.Namespace) -> int:
+    report = run_adversarial_evaluation(args.vault, args.seed, args.out)
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(report["summary"]["verdict"])
+        for risk in report["summary"]["highestRisks"]:
+            print(f"{risk['score']:.3f} {risk['id']} - {risk['label']}")
+    return 0
+
+
+def print_summary(result: dict) -> None:
+    print(f"Seed: {result.get('seedPath')}")
+    if result.get("query"):
+        print(f"Query: {result['query']}")
+    for candidate in result["candidates"]:
+        print(f"{candidate['score']['total']:.3f} {candidate['node']['path']} [{', '.join(candidate['relationTypes'])}]")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,25 @@
+{
+  "name": "mba-agent",
+  "version": "0.1.0",
+  "description": "Experimental Markov blanket activation tools for AI agents working over markdown vaults.",
+  "bin": {
+    "mba": "bin/mba"
+  },
+  "scripts": {
+    "test": "python3 -m unittest discover -s tests"
+  },
+  "files": [
+    "bin/",
+    "skills/",
+    "install.sh",
+    "README.md"
+  ],
+  "keywords": [
+    "ai-agent",
+    "obsidian",
+    "markdown",
+    "markov-blanket",
+    "memory"
+  ],
+  "license": "MIT"
+}
