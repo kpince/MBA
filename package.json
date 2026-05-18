@@ -2,6 +2,11 @@
   "name": "mba-agent",
   "version": "0.1.0",
   "description": "Experimental Markov blanket activation tools for AI agents working over markdown vaults.",
+  "homepage": "https://github.com/kpince/MBA",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kpince/MBA.git"
+  },
   "bin": {
     "mba": "bin/mba"
   },

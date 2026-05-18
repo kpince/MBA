@@ -4,7 +4,7 @@ set -eu
 BIN_DIR="${MBA_BIN_DIR:-$HOME/.local/bin}"
 SKILL_HOME="${MBA_SKILL_HOME:-$HOME/.codex/skills}"
 SKILL_NAME="mba-adversarial-evaluator"
-DEFAULT_TARBALL_URL="https://github.com/YOU/mba-agent/archive/refs/heads/main.tar.gz"
+DEFAULT_TARBALL_URL="https://github.com/kpince/MBA/archive/refs/heads/main.tar.gz"
 
 cleanup() {
   if [ "${MBA_TMP_DIR:-}" != "" ] && [ -d "$MBA_TMP_DIR" ]; then

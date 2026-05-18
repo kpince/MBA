@@ -31,8 +31,7 @@ sh install.sh
 For a future GitHub install:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOU/mba-agent/main/install.sh | \
-  MBA_AGENT_TARBALL_URL=https://github.com/YOU/mba-agent/archive/refs/heads/main.tar.gz sh
+curl -fsSL https://raw.githubusercontent.com/kpince/MBA/main/install.sh | sh
 ```
 
 The installer links `mba` into `~/.local/bin` and copies the bundled skill into `~/.codex/skills/mba-adversarial-evaluator`.
